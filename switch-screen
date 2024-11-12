@@ -1,0 +1,33 @@
+#!/bin/sh
+
+switch_it () {
+    SCREEN_ID=$1
+    INPUT_SOURCE=$2
+    
+    # DDC Input select feature
+    VCP_FEATURE="0x60" 
+    VCP_VALUE="0xff"                     
+    OS=$(uname)
+
+    if [ "$INPUT_SOURCE" = "usb" ] ; then VCP_VALUE="0x1b"; fi
+    if [ "$INPUT_SOURCE" = "dp" ] ; then VCP_VALUE="0x0f"; fi
+    if [ "$INPUT_SOURCE" = "hdmi" ] ; then VCP_VALUE="0x11"; fi
+  
+    if [ "$VCP_VALUE" = "0xff" ] ; then echo "Invalid input source (choose from usb, dp, hdmi)" ; exit 1 ; fi
+
+    # TODO: CLI doesn't work nicely
+    # if [ "$OS" = "Darwin" ] ; then COMMAND="/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay set -namelike=$SCREEN_ID -feature=ddc -vcp=$VCP_FEATURE -value=$VCP_VALUE" ; fi    
+    if [ "$OS" = "Linux" ] ; then COMMAND="ddcutil setvcp $VCP_FEATURE $VCP_VALUE --sn $SCREEN_ID" ; fi
+
+    $($COMMAND)
+}
+
+MODE=$1
+if [ -z "$MODE" ] ; then echo "USAGE: switch-screen work|home" ; exit 1 ; fi
+
+RIGHT_MONITOR="6NG4FP3"
+LEFT_MONITOR="JNG4FP3"
+
+if [ "$MODE" = "home" ] ; then switch_it $RIGHT_MONITOR "hdmi" ; switch_it $LEFT_MONITOR "usb" ; fi
+if [ "$MODE" = "work" ] ; then switch_it $RIGHT_MONITOR "usb" ; switch_it $LEFT_MONITOR "hdmi" ; fi
+
